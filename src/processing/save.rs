@@ -1,5 +1,6 @@
+use libvips::bindings as ffi;
+use libvips::ops::{ForeignHeifCompression, ForeignHeifEncoder, ForeignSubsample};
 use libvips::{ops, VipsImage};
-use libvips::ops::{ForeignHeifCompression, ForeignSubsample, ForeignHeifEncoder};
 
 /// Saves an image to bytes in the specified format.
 pub fn save_image(img: VipsImage, format: &str, _quality: u8) -> Result<Vec<u8>, String> {
@@ -20,7 +21,24 @@ pub fn save_image(img: VipsImage, format: &str, _quality: u8) -> Result<Vec<u8>,
                 encoder: ForeignHeifEncoder::Svt,
                 ..ops::HeifsaveBufferOptions::default()
             };
-            ops::heifsave_buffer_with_opts(&img, &options).map_err(|e| format!("Error encoding avif: {}", e))
+            ops::heifsave_buffer_with_opts(&img, &options).map_err(|e| {
+                unsafe {
+
+                    let error_buffer = ffi::vips_error_buffer();
+                    
+                    let vips_details = if error_buffer.is_null() {
+                        "No VIPS error details available".to_string()
+                    } else {
+                        std::ffi::CStr::from_ptr(error_buffer)
+                            .to_string_lossy()
+                            .into_owned()
+                    };
+                    
+                    // Limpa o buffer de erro para a próxima operação
+                    ffi::vips_error_clear();
+                    format!("Error encoding avif: {} vips error {}", e, vips_details)
+                }
+            })
         }
         _ => Err(format!("Unsupported output format: {}", format)),
     }
