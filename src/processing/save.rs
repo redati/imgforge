@@ -12,7 +12,7 @@ pub fn save_image(img: VipsImage, format: &str, _quality: u8) -> Result<Vec<u8>,
         "gif" => ops::gifsave_buffer(&img).map_err(|e| format!("Error encoding GIF: {}", e)),
         "avif" => {
             let options = ops::HeifsaveBufferOptions {
-                q: 50,
+                q: _quality as i32,
                 bitdepth: 8,
                 lossless: false,
                 compression: ForeignHeifCompression::Av1,
