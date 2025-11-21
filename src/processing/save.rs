@@ -1,5 +1,5 @@
 use libvips::bindings as ffi;
-use libvips::ops::{ForeignHeifCompression, ForeignHeifEncoder, ForeignSubsample};
+use libvips::ops::{ForeignHeifCompression, ForeignHeifEncoder, ForeignSubsample, ForeignKeep};
 use libvips::{ops, VipsImage};
 
 /// Saves an image to bytes in the specified format.
@@ -19,6 +19,7 @@ pub fn save_image(img: VipsImage, format: &str, _quality: u8) -> Result<Vec<u8>,
                 effort: 3,
                 subsample_mode: ForeignSubsample::Off,
                 encoder: ForeignHeifEncoder::Svt,
+                keep: ForeignKeep::Icc,
                 ..ops::HeifsaveBufferOptions::default()
             };
             ops::heifsave_buffer_with_opts(&img, &options).map_err(|e| {
